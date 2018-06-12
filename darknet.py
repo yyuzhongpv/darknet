@@ -119,7 +119,14 @@ if os.name == "nt":
             lib = CDLL(winGPUdll, RTLD_GLOBAL)
             print("Environment variables indicated a CPU run, but we didn't find `"+winNoGPUdll+"`. Trying a GPU run anyway.")
 else:
-    lib = CDLL("./darknet.so", RTLD_GLOBAL)
+    #yzyan debug
+    import os.path
+    dll_name = "libdarknet.so"
+    dllabspath = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + dll_name
+    print("Load so file from " + dllabspath)
+    lib = CDLL(dllabspath)
+    #lib = CDLL("./darknet.so", RTLD_GLOBAL)
+
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]

@@ -443,8 +443,8 @@ int resize_network(network *net, int w, int h)
     }
 #ifdef GPU
     if(gpu_index >= 0){
-		printf(" try to allocate workspace = %zu * sizeof(float), ", (workspace_size - 1) / sizeof(float) + 1);
-        net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(float)+1);
+		printf(" try to allocate workspace = %zu * sizeof(float), ", workspace_size / sizeof(float) + 1);
+        net->workspace = cuda_make_array(0, workspace_size/sizeof(float) + 1);
 		printf(" CUDA allocate done! \n");
     }else {
         free(net->workspace);
@@ -491,6 +491,11 @@ image get_network_image_layer(network net, int i)
     }
     image def = {0};
     return def;
+}
+
+layer* get_network_layer(network* net, int i)
+{
+    return net->layers + i;
 }
 
 image get_network_image(network net)
@@ -602,12 +607,18 @@ void custom_get_region_detections(layer l, int w, int h, int net_w, int net_h, f
 
 void fill_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, detection *dets, int letter)
 {
+	int prev_classes = -1;
 	int j;
 	for (j = 0; j < net->n; ++j) {
 		layer l = net->layers[j];
 		if (l.type == YOLO) {
 			int count = get_yolo_detections(l, w, h, net->w, net->h, thresh, map, relative, dets, letter);
 			dets += count;
+			if (prev_classes < 0) prev_classes = l.classes;
+			else if (prev_classes != l.classes) {
+				printf(" Error: Different [yolo] layers have different number of classes = %d and %d - check your cfg-file! \n",
+					prev_classes, l.classes);
+			}
 		}
 		if (l.type == REGION) {
 			custom_get_region_detections(l, w, h, net->w, net->h, thresh, map, hier, relative, dets, letter);
@@ -640,7 +651,8 @@ void free_detections(detection *dets, int n)
 
 float *network_predict_image(network *net, image im)
 {
-	image imr = letterbox_image(im, net->w, net->h);
+	//image imr = letterbox_image(im, net->w, net->h);
+	image imr = resize_image(im, net->w, net->h);
 	set_batch_network(net, 1);
 	float *p = network_predict(*net, imr.data);
 	free_image(imr);

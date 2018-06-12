@@ -51,6 +51,7 @@ char **get_random_paths(char **paths, int n, int m)
 			random_paths[i] = paths[index];
 			//if(i == 0) printf("%s\n", paths[index]);
 			//printf("grp: %s\n", paths[index]);
+			if (strlen(random_paths[i]) <= 4) printf(" Very small path to the image: %s \n", random_paths[i]);
 		} while (strlen(random_paths[i]) == 0);
     }
     pthread_mutex_unlock(&mutex);
@@ -341,7 +342,7 @@ void fill_truth_detection(char *path, int num_boxes, float *truth, int classes, 
 			system(buff);
 			continue;
 		}
-		if (x < 0 || x > 1 || y < 0 || y > 1) {
+		if (x <= 0 || x > 1 || y <= 0 || y > 1) {
 			printf("\n Wrong annotation: x = %f, y = %f \n", x, y);
 			sprintf(buff, "echo %s \"Wrong annotation: x = %f, y = %f\" >> bad_label.list", labelpath, x, y);
 			system(buff);
@@ -512,12 +513,18 @@ matrix load_tags_paths(char **paths, int n, int k)
     return y;
 }
 
-char **get_labels(char *filename)
+char **get_labels_custom(char *filename, int *size)
 {
     list *plist = get_paths(filename);
+	if(size) *size = plist->size;
     char **labels = (char **)list_to_array(plist);
     free_list(plist);
     return labels;
+}
+
+char **get_labels(char *filename)
+{
+	return get_labels_custom(filename, NULL);
 }
 
 void free_data(data d)

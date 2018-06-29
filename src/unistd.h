@@ -1,3 +1,4 @@
+#ifdef _WIN32  //yzyan for compile google test
 #ifndef _UNISTD_H
 #define _UNISTD_H    1
 
@@ -50,3 +51,7 @@ These may be OR'd together.  */
 //typedef unsigned __int64  uint64_t;
 
 #endif /* unistd.h  */
+
+#else
+#include "/usr/include/unistd.h"
+#endif
